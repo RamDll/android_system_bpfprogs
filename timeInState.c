@@ -14,15 +14,13 @@
  *
  */
 
+#include <errno.h>
+#include <linux/bpf.h>
+#include <stdbool.h>
+
 #include <android_bpf_defs.h>
 #include <bpf_timeinstate.h>
-#include <errno.h>
-
-#ifdef ENABLE_LIBBPF
-#include <linux/bpf.h>
 #include <private/android_filesystem_config.h>
-#include <stdbool.h>
-#endif  // ENABLE_LIBBPF
 
 DEFINE_BPF_MAP_GRW(total_time_in_state_map, PERCPU_ARRAY, uint32_t, uint64_t, MAX_FREQS_FOR_TOTAL,
                    AID_SYSTEM)

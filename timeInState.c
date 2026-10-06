@@ -254,18 +254,19 @@ DEFINE_BPF_PROG("tracepoint/power/cpu_frequency", AID_ROOT, AID_SYSTEM,
     return ALLOW;
 }
 
-struct task_struct {
-    pid_t pid;
-} __attribute__((preserve_access_index));
-
+// emerald: the prebuilt 5.10 kernel has no BTF (/sys/kernel/btf/vmlinux), so libbpf can't apply
+// the CO-RE relocation for task_struct::pid and the whole object failed to load - no per-UID
+// CPU time-in-state, no CPU in battery stats. Keep the program (libtimeinstate requires it) but
+// don't read task_struct: the PID is never matched, so a tracked PID isn't released when it exits.
+// Only KernelSingleProcessCpuThreadReader tracks PIDs (system_server's own), which doesn't exit
+// without a reboot.
 DEFINE_BPF_PROG("raw_tp/sched_process_free", AID_ROOT, AID_SYSTEM,
                 tracepoint_sched_sched_process_free)
 (struct bpf_raw_tracepoint_args* ctx) {
     const int ALLOW = 1;
+    (void)ctx;
 
-    // TP_PROTO(struct task_struct *p)
-    struct task_struct* p = (void*)ctx->args[0];
-    int pid = BPF_CORE_READ(p, pid);
+    int pid = -1;
     bool is_last = true;
 
     // eBPF verifier does not currently allow loops.

@@ -30,6 +30,10 @@ license {
 libbpf_prog {
     name: "timeInState.bpf",
     srcs: ["timeInState.c"],
+    // emerald: clang 21 defaults to BPF ISA v3 and turns __sync_fetch_and_add on u32 into
+    // atomic_fetch_add (BPF_ATOMIC|BPF_FETCH), which the 5.10 verifier rejects ("BPF_STX uses
+    // reserved fields", kernel 5.12+). v2 emits the legacy XADD form that 5.10 accepts.
+    cflags: ["-mcpu=v2"],
     header_libs: [
         "bpf_prog_headers",
         "libcutils_headers",
